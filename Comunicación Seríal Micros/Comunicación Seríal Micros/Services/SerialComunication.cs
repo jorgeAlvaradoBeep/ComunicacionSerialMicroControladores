@@ -5,6 +5,7 @@ using System.Linq;
 using System.Management;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Comunicación_Seríal_Micros.Services
 {
@@ -30,6 +31,10 @@ namespace Comunicación_Seríal_Micros.Services
                     var tList = (from n in portnames
                                  join p in ports on n equals p["DeviceID"].ToString()
                                  select n + " - " + p["Caption"]).ToList();
+                    if (tList.Count != portnames.Length)
+                    {
+                        return getCompletPorts(portnames, tList);
+                    }
                     return tList.ToArray();
 
 
@@ -39,6 +44,19 @@ namespace Comunicación_Seríal_Micros.Services
             {
                 return portnames;
             }
+        }
+        static string[] getCompletPorts(string[] p, List<string> p2)
+        {
+            int pos = 0;
+            foreach (string d in p)
+            {
+                if(!p2.Any(com => com.Contains(d)))
+                {
+                    p2.Insert(pos, d);
+                }
+                pos++;
+            }
+            return p2.ToArray();
         }
         public static string[] ExistingPortsOnly()
         {
@@ -62,7 +80,8 @@ namespace Comunicación_Seríal_Micros.Services
                 }
                 catch (Exception e)
                 {
-                    ErrorMessage = "No se pudo establecer comunicacion con el MicroController";
+                    ErrorMessage = $"No se pudo establecer comunicacion con el MicroController{Environment.NewLine}" +
+                        $"{e.Message}";
                     ControllerException ex = new ControllerException(ErrorMessage);
                     throw ex;
                 }
